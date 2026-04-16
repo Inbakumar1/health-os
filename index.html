@@ -1,0 +1,1963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0f1a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Health OS">
+<title>Health OS — Maruti</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080d18;
+    --bg2: #0f1626;
+    --bg3: #161f35;
+    --card: #111827;
+    --border: #1e2d47;
+    --accent: #3b82f6;
+    --accent2: #60a5fa;
+    --green: #10b981;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --orange: #f97316;
+    --pink: #ec4899;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #475569;
+    --mono: 'DM Mono', monospace;
+    --sans: 'Syne', sans-serif;
+    --body: 'Inter', sans-serif;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    min-height: 100vh;
+    overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── LAYOUT ── */
+  #app { display: flex; flex-direction: column; min-height: 100vh; }
+
+  .header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(8,13,24,0.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px 10px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .header-title { font-family: var(--sans); font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+  .header-sub { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-top: 1px; }
+  .header-date { font-family: var(--mono); font-size: 11px; color: var(--accent2); text-align: right; }
+
+  .screens { flex: 1; overflow-x: hidden; }
+  .screen { display: none; padding: 16px 16px 100px; animation: fadeUp 0.25s ease; }
+  .screen.active { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── NAV ── */
+  .nav {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(11,17,30,0.96);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    display: flex;
+    padding-bottom: var(--safe-bottom);
+  }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    gap: 3px; padding: 10px 4px 8px;
+    cursor: pointer; transition: all 0.15s;
+    border: none; background: none; color: var(--text3);
+    font-size: 9px; font-family: var(--mono); letter-spacing: 0.5px;
+  }
+  .nav-item .icon { font-size: 20px; transition: transform 0.2s; }
+  .nav-item.active { color: var(--accent2); }
+  .nav-item.active .icon { transform: translateY(-2px); }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-family: var(--sans); font-size: 13px; font-weight: 700;
+    color: var(--text2); letter-spacing: 0.5px; text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  /* ── STATUS PILLS ── */
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 99px;
+    font-size: 11px; font-family: var(--mono); font-weight: 500;
+  }
+  .pill.red { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+  .pill.yellow { background: rgba(245,158,11,0.15); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
+  .pill.green { background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+  .pill.orange { background: rgba(249,115,22,0.15); color: #fdba74; border: 1px solid rgba(249,115,22,0.3); }
+  .pill.blue { background: rgba(59,130,246,0.15); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
+
+  /* ── METRIC TILES ── */
+  .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .metric-tile {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 14px 12px;
+    position: relative; overflow: hidden;
+  }
+  .metric-tile::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  }
+  .metric-tile.red::before { background: var(--red); }
+  .metric-tile.yellow::before { background: var(--yellow); }
+  .metric-tile.green::before { background: var(--green); }
+  .metric-tile.orange::before { background: var(--orange); }
+  .metric-tile.blue::before { background: var(--accent); }
+  .metric-label { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-bottom: 4px; }
+  .metric-value { font-family: var(--mono); font-size: 22px; font-weight: 500; line-height: 1; }
+  .metric-value.red { color: #fca5a5; }
+  .metric-value.yellow { color: #fcd34d; }
+  .metric-value.green { color: #6ee7b7; }
+  .metric-value.orange { color: #fdba74; }
+  .metric-value.blue { color: #93c5fd; }
+  .metric-unit { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-top: 2px; }
+  .metric-trend { font-size: 10px; color: var(--text3); margin-top: 4px; }
+
+  /* ── FORM ELEMENTS ── */
+  .form-group { margin-bottom: 14px; }
+  .form-label {
+    display: block; font-size: 11px; font-family: var(--mono);
+    color: var(--text2); margin-bottom: 6px; letter-spacing: 0.3px;
+  }
+  .form-label .hint { color: var(--text3); font-size: 10px; }
+  .form-input {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text);
+    font-family: var(--mono); font-size: 18px;
+    padding: 12px 14px; outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    -webkit-appearance: none;
+  }
+  .form-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+  }
+  .form-input::placeholder { color: var(--text3); font-size: 15px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* ── CHECKBOX TOGGLE ── */
+  .toggle-group { display: flex; gap: 8px; }
+  .toggle-btn {
+    flex: 1; padding: 12px 8px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); background: var(--bg3);
+    color: var(--text2); font-family: var(--mono); font-size: 12px;
+    cursor: pointer; transition: all 0.15s; text-align: center;
+  }
+  .toggle-btn.active-yes { background: rgba(16,185,129,0.15); border-color: var(--green); color: #6ee7b7; }
+  .toggle-btn.active-no { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: #fca5a5; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    width: 100%; padding: 16px; border-radius: var(--radius);
+    border: none; font-family: var(--sans); font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: all 0.15s; letter-spacing: 0.3px;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:active { background: #2563eb; transform: scale(0.98); }
+  .btn-secondary {
+    background: var(--bg3); color: var(--text2);
+    border: 1px solid var(--border); font-weight: 600;
+  }
+  .btn-sm {
+    padding: 8px 16px; font-size: 12px; width: auto;
+    border-radius: var(--radius-sm); font-weight: 600;
+  }
+
+  /* ── ALERT BANNER ── */
+  .alert-banner {
+    border-radius: var(--radius-sm); padding: 12px 14px;
+    margin-bottom: 10px; display: flex; gap: 10px; align-items: flex-start;
+  }
+  .alert-banner.critical { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); }
+  .alert-banner.warning { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.25); }
+  .alert-banner.info { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25); }
+  .alert-icon { font-size: 16px; margin-top: 1px; flex-shrink: 0; }
+  .alert-text { font-size: 13px; line-height: 1.5; color: var(--text); }
+  .alert-text strong { font-weight: 600; }
+
+  /* ── ACTION ITEMS ── */
+  .action-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; background: var(--bg3);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    margin-bottom: 8px;
+  }
+  .action-icon { font-size: 20px; flex-shrink: 0; }
+  .action-text { font-size: 13px; line-height: 1.4; flex: 1; }
+  .action-text strong { display: block; font-weight: 600; margin-bottom: 2px; }
+  .action-text span { color: var(--text2); font-size: 12px; }
+
+  /* ── PROGRESS RING ── */
+  .progress-ring-wrap { display: flex; align-items: center; gap: 16px; }
+  .ring-label { flex: 1; }
+  .ring-title { font-family: var(--sans); font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+  .ring-sub { font-size: 12px; color: var(--text2); }
+  .ring-val { font-family: var(--mono); font-size: 22px; font-weight: 500; }
+
+  /* ── STATUS ROW ── */
+  .status-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 11px 0; border-bottom: 1px solid var(--border);
+  }
+  .status-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .status-name { font-size: 13px; font-weight: 500; }
+  .status-detail { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-top: 2px; }
+
+  /* ── CHART ── */
+  .chart-wrap { position: relative; height: 120px; margin: 8px 0 4px; }
+  canvas { width: 100% !important; }
+
+  /* ── LAB TABLE ── */
+  .lab-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0; border-bottom: 1px solid rgba(30,45,71,0.5);
+  }
+  .lab-row:last-child { border-bottom: none; }
+  .lab-name { font-size: 13px; font-weight: 500; }
+  .lab-date { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-top: 2px; }
+  .lab-val { text-align: right; }
+  .lab-num { font-family: var(--mono); font-size: 15px; font-weight: 500; }
+  .lab-ref { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-top: 2px; }
+
+  /* ── SYNC STATUS ── */
+  .sync-dot {
+    display: inline-block; width: 6px; height: 6px;
+    border-radius: 50%; margin-right: 5px;
+  }
+  .sync-dot.synced { background: var(--green); }
+  .sync-dot.pending { background: var(--yellow); animation: pulse 1.5s infinite; }
+  .sync-dot.error { background: var(--red); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 99px; padding: 10px 20px;
+    font-size: 13px; font-family: var(--mono);
+    opacity: 0; transition: all 0.3s; z-index: 999; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: var(--green); color: #6ee7b7; }
+  .toast.error { border-color: var(--red); color: #fca5a5; }
+
+  /* ── SECTION HEADER ── */
+  .section-header {
+    font-family: var(--sans); font-size: 18px; font-weight: 800;
+    margin-bottom: 14px; letter-spacing: -0.5px;
+  }
+  .section-header span { color: var(--accent2); }
+
+  /* ── INSIGHT CARD ── */
+  .insight-card {
+    background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(16,185,129,0.05));
+    border: 1px solid rgba(59,130,246,0.2);
+    border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
+  }
+  .insight-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .insight-title { font-family: var(--sans); font-size: 14px; font-weight: 700; }
+  .insight-conf { font-size: 10px; font-family: var(--mono); color: var(--text3); }
+  .insight-text { font-size: 13px; line-height: 1.6; color: var(--text2); }
+
+  /* ── LOG CHECK BANNER ── */
+  .log-check {
+    display: flex; gap: 10px; margin-bottom: 14px;
+  }
+  .log-check-item {
+    flex: 1; padding: 10px 8px; text-align: center;
+    border-radius: var(--radius-sm); border: 1px solid var(--border);
+    background: var(--bg3);
+  }
+  .log-check-item.done { border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.08); }
+  .log-check-item.pending { border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.08); }
+  .log-check-emoji { font-size: 18px; }
+  .log-check-label { font-size: 10px; font-family: var(--mono); color: var(--text2); margin-top: 3px; }
+
+  /* ── LOADING ── */
+  .loading { text-align: center; padding: 40px 20px; color: var(--text3); }
+  .loading-spinner {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 2px solid var(--border); border-top-color: var(--accent);
+    animation: spin 0.8s linear infinite; margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 0; }
+
+  /* ── CONFIG SCREEN ── */
+  .config-field { margin-bottom: 16px; }
+  .config-label { font-size: 11px; font-family: var(--mono); color: var(--text2); margin-bottom: 6px; display: block; }
+  .config-input {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text);
+    font-family: var(--mono); font-size: 13px; padding: 10px 12px;
+    outline: none;
+  }
+  .config-input:focus { border-color: var(--accent); }
+
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+  .target-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; border-bottom: 1px solid rgba(30,45,71,0.5);
+  }
+  .target-row:last-child { border-bottom: none; }
+  .target-name { font-size: 13px; }
+  .target-vals { text-align: right; }
+  .target-current { font-family: var(--mono); font-size: 13px; }
+  .target-goal { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+
+  /* ── WHY SCREEN ── */
+  .symptom-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 10px; overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .symptom-card.expanded { border-color: rgba(96,165,250,0.4); }
+  .symptom-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px; cursor: pointer; user-select: none;
+  }
+  .symptom-header-left { display: flex; align-items: center; gap: 12px; }
+  .symptom-emoji { font-size: 22px; flex-shrink: 0; }
+  .symptom-name { font-family: var(--sans); font-size: 14px; font-weight: 700; }
+  .symptom-sub { font-size: 11px; color: var(--text3); margin-top: 2px; font-family: var(--mono); }
+  .symptom-chevron { color: var(--text3); font-size: 14px; transition: transform 0.2s; flex-shrink: 0; }
+  .symptom-card.expanded .symptom-chevron { transform: rotate(180deg); }
+  .symptom-body { display: none; padding: 0 16px 16px; }
+  .symptom-card.expanded .symptom-body { display: block; }
+
+  .cause-row {
+    padding: 10px 12px; border-radius: var(--radius-sm);
+    background: var(--bg3); border: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+  .cause-row-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .cause-name { font-size: 13px; font-weight: 600; flex: 1; }
+  .cause-status { font-size: 11px; font-family: var(--mono); flex-shrink: 0; margin-top: 2px; }
+  .cause-status.active { color: #fca5a5; }
+  .cause-status.watch { color: #fcd34d; }
+  .cause-status.ok { color: #6ee7b7; }
+  .cause-vals { display: flex; gap: 16px; margin-top: 6px; flex-wrap: wrap; }
+  .cause-val-item { font-size: 11px; font-family: var(--mono); }
+  .cause-val-item .label { color: var(--text3); }
+  .cause-val-item .val { color: var(--text); margin-left: 4px; }
+  .cause-val-item .val.bad { color: #fca5a5; }
+  .cause-val-item .val.warn { color: #fcd34d; }
+  .cause-val-item .val.good { color: #6ee7b7; }
+
+  .mechanism-box {
+    background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.15);
+    border-radius: var(--radius-sm); padding: 10px 12px; margin-top: 10px;
+  }
+  .mechanism-box .mech-title { font-size: 10px; font-family: var(--mono); color: var(--accent2); margin-bottom: 5px; letter-spacing: 0.5px; }
+  .mechanism-box .mech-text { font-size: 12px; color: var(--text2); line-height: 1.6; }
+
+  .escalation-box {
+    background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.2);
+    border-radius: var(--radius-sm); padding: 10px 12px; margin-top: 8px;
+    font-size: 12px; color: #fca5a5; line-height: 1.5;
+  }
+  .escalation-box strong { display: block; margin-bottom: 2px; font-size: 11px; font-family: var(--mono); }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div>
+      <div class="header-title">Health OS</div>
+      <div class="header-sub">Inbakumar M · GN0001079671</div>
+    </div>
+    <div class="header-date">
+      <div id="header-date"></div>
+      <div style="display:flex;align-items:center;justify-content:flex-end;margin-top:3px;">
+        <span class="sync-dot" id="sync-dot"></span>
+        <span style="font-size:10px;color:var(--text3)" id="sync-label">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREENS -->
+  <div class="screens">
+
+    <!-- ① TODAY -->
+    <div class="screen active" id="screen-today">
+      <div class="section-header">Today <span id="today-greeting"></span></div>
+
+      <!-- Log status -->
+      <div class="log-check">
+        <div class="log-check-item" id="morning-check">
+          <div class="log-check-emoji">🌅</div>
+          <div class="log-check-label">MORNING</div>
+        </div>
+        <div class="log-check-item" id="evening-check">
+          <div class="log-check-emoji">🌙</div>
+          <div class="log-check-label">EVENING</div>
+        </div>
+        <div class="log-check-item" id="meds-check">
+          <div class="log-check-emoji">💊</div>
+          <div class="log-check-label">MEDS</div>
+        </div>
+        <div class="log-check-item" id="walk-check">
+          <div class="log-check-emoji">🚶</div>
+          <div class="log-check-label">WALK</div>
+        </div>
+      </div>
+
+      <!-- Alerts -->
+      <div id="alerts-container"></div>
+
+      <!-- Today's actions -->
+      <div class="card">
+        <div class="card-title">Today's Actions</div>
+        <div id="actions-container"></div>
+      </div>
+
+      <!-- Quick vitals from last log -->
+      <div class="card">
+        <div class="card-title">Last Reading</div>
+        <div class="metric-grid" id="today-metrics"></div>
+      </div>
+
+      <!-- Weekly pulse -->
+      <div class="card">
+        <div class="card-title">This Week</div>
+        <div id="weekly-summary"></div>
+      </div>
+    </div>
+
+    <!-- ② LOG -->
+    <div class="screen" id="screen-log">
+      <div class="section-header">Log <span id="log-type-label">Morning</span></div>
+
+      <!-- Morning / Evening toggle -->
+      <div class="toggle-group" style="margin-bottom:16px;">
+        <button class="toggle-btn active-yes" id="log-tab-morning" onclick="switchLogTab('morning')">🌅 Morning</button>
+        <button class="toggle-btn" id="log-tab-evening" onclick="switchLogTab('evening')">🌙 Evening</button>
+      </div>
+
+      <!-- MORNING FORM -->
+      <div id="log-morning">
+        <div class="card">
+          <div class="card-title">Vitals</div>
+          <div class="form-group">
+            <label class="form-label">Fasting Glucose <span class="hint">(mg/dL)</span></label>
+            <input type="number" class="form-input" id="m-glucose" placeholder="e.g. 128" inputmode="decimal">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">BP Systolic</label>
+              <input type="number" class="form-input" id="m-sys" placeholder="130" inputmode="decimal">
+            </div>
+            <div class="form-group">
+              <label class="form-label">BP Diastolic</label>
+              <input type="number" class="form-input" id="m-dia" placeholder="85" inputmode="decimal">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Weight <span class="hint">(kg)</span></label>
+              <input type="number" class="form-input" id="m-weight" placeholder="77.4" inputmode="decimal" step="0.1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Sleep <span class="hint">(hrs)</span></label>
+              <input type="number" class="form-input" id="m-sleep" placeholder="7" inputmode="decimal" step="0.5">
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Morning Medications</div>
+          <div class="form-group">
+            <label class="form-label">Istamet 50/500mg <span class="hint">— after breakfast</span></label>
+            <div class="toggle-group" id="toggle-istamet-am">
+              <button class="toggle-btn" onclick="setToggle('toggle-istamet-am','yes')">✓ Taken</button>
+              <button class="toggle-btn" onclick="setToggle('toggle-istamet-am','no')">✗ Skipped</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Evitol + Reheptin <span class="hint">— after breakfast</span></label>
+            <div class="toggle-group" id="toggle-evitol">
+              <button class="toggle-btn" onclick="setToggle('toggle-evitol','yes')">✓ Taken</button>
+              <button class="toggle-btn" onclick="setToggle('toggle-evitol','no')">✗ Skipped</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Optional</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Sugar intake <span class="hint">(g)</span></label>
+              <input type="number" class="form-input" id="m-sugar" placeholder="0" inputmode="decimal">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Water <span class="hint">(glasses)</span></label>
+              <input type="number" class="form-input" id="m-water" placeholder="8" inputmode="decimal">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Notes <span class="hint">(stress, diet change, travel…)</span></label>
+            <input type="text" class="form-input" id="m-notes" placeholder="Optional note" style="font-size:14px;">
+          </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="submitMorningLog()">Save Morning Log →</button>
+      </div>
+
+      <!-- EVENING FORM -->
+      <div id="log-evening" style="display:none">
+        <div class="card">
+          <div class="card-title">Evening Check-In</div>
+          <div class="form-group">
+            <label class="form-label">Post-dinner Glucose <span class="hint">(mg/dL, optional)</span></label>
+            <input type="number" class="form-input" id="e-glucose" placeholder="e.g. 145" inputmode="decimal">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Post-dinner Walk done?</label>
+            <div class="toggle-group" id="toggle-walk">
+              <button class="toggle-btn" onclick="setToggle('toggle-walk','yes')">✓ Done</button>
+              <button class="toggle-btn" onclick="setToggle('toggle-walk','no')">✗ Skipped</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Night Medications</div>
+          <div class="form-group">
+            <label class="form-label">Istamet 50/500mg <span class="hint">— after dinner</span></label>
+            <div class="toggle-group" id="toggle-istamet-pm">
+              <button class="toggle-btn" onclick="setToggle('toggle-istamet-pm','yes')">✓ Taken</button>
+              <button class="toggle-btn" onclick="setToggle('toggle-istamet-pm','no')">✗ Skipped</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Storvas 20mg + Lipaglyn 4mg <span class="hint">— bedtime</span></label>
+            <div class="toggle-group" id="toggle-storvas">
+              <button class="toggle-btn" onclick="setToggle('toggle-storvas','yes')">✓ Taken</button>
+              <button class="toggle-btn" onclick="setToggle('toggle-storvas','no')">✗ Skipped</button>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="submitEveningLog()">Save Evening Log →</button>
+      </div>
+    </div>
+
+    <!-- ③ STATUS -->
+    <div class="screen" id="screen-status">
+      <div class="section-header">Health <span>Status</span></div>
+
+      <!-- Overall risk -->
+      <div class="card" id="overall-risk-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-family:var(--sans);font-size:20px;font-weight:800;" id="overall-risk-label">—</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:3px;">Overall risk level</div>
+          </div>
+          <div style="font-size:40px;" id="overall-risk-emoji">—</div>
+        </div>
+      </div>
+
+      <!-- Domain status -->
+      <div class="card">
+        <div class="card-title">Domains</div>
+        <div class="status-row">
+          <div><div class="status-name">Glucose Control</div><div class="status-detail" id="s-glucose-detail">FBG — · HbA1c 7.7%</div></div>
+          <span class="pill red" id="s-glucose-pill">HIGH</span>
+        </div>
+        <div class="status-row">
+          <div><div class="status-name">Blood Pressure</div><div class="status-detail" id="s-bp-detail">Last: —</div></div>
+          <span class="pill orange" id="s-bp-pill">MOD</span>
+        </div>
+        <div class="status-row">
+          <div><div class="status-name">Liver (MASLD)</div><div class="status-detail">ALT 84 · CAP 347 · LSM 4.8</div></div>
+          <span class="pill orange">WATCH</span>
+        </div>
+        <div class="status-row">
+          <div><div class="status-name">Lipids</div><div class="status-detail">LDL 227 · TG 237 · HDL 41</div></div>
+          <span class="pill red">HIGH</span>
+        </div>
+        <div class="status-row">
+          <div><div class="status-name">Medication</div><div class="status-detail" id="s-meds-detail">This week: —</div></div>
+          <span class="pill" id="s-meds-pill">—</span>
+        </div>
+      </div>
+
+      <!-- Target vs Actual -->
+      <div class="card">
+        <div class="card-title">Target vs Actual</div>
+        <div class="target-row">
+          <div class="target-name">HbA1c</div>
+          <div class="target-vals">
+            <div class="target-current" id="tv-hba1c" style="color:#fca5a5">7.7%</div>
+            <div class="target-goal">Target &lt;7.0% by May 2026</div>
+          </div>
+        </div>
+        <div class="target-row">
+          <div class="target-name">Fasting Glucose</div>
+          <div class="target-vals">
+            <div class="target-current" id="tv-fbg" style="color:#fca5a5">150</div>
+            <div class="target-goal">Target &lt;130 mg/dL</div>
+          </div>
+        </div>
+        <div class="target-row">
+          <div class="target-name">LDL</div>
+          <div class="target-vals">
+            <div class="target-current" style="color:#fca5a5">227.6</div>
+            <div class="target-goal">Target &lt;130 by May 2026</div>
+          </div>
+        </div>
+        <div class="target-row">
+          <div class="target-name">ALT / SGPT</div>
+          <div class="target-vals">
+            <div class="target-current" style="color:#fca5a5">84 U/L</div>
+            <div class="target-goal">Target &lt;50 U/L</div>
+          </div>
+        </div>
+        <div class="target-row">
+          <div class="target-name">Weight</div>
+          <div class="target-vals">
+            <div class="target-current" id="tv-weight" style="color:#fcd34d">77.4 kg</div>
+            <div class="target-goal">Target 72 kg</div>
+          </div>
+        </div>
+        <div class="target-row">
+          <div class="target-name">BP</div>
+          <div class="target-vals">
+            <div class="target-current" style="color:#fca5a5">140/100</div>
+            <div class="target-goal">Target &lt;130/80</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pending investigations -->
+      <div class="card">
+        <div class="card-title">Pending Investigations</div>
+        <div class="action-item">
+          <div class="action-icon">🧪</div>
+          <div class="action-text"><strong>June 2026 Full Panel</strong><span>HbA1c · Lipid · LFT — Book now at Artemis</span></div>
+        </div>
+        <div class="action-item">
+          <div class="action-icon">🔬</div>
+          <div class="action-text"><strong>Abdominal Doppler</strong><span>CDFI for spleno-portal axis</span></div>
+        </div>
+        <div class="action-item">
+          <div class="action-icon">🩸</div>
+          <div class="action-text"><strong>Ferritin + Iron studies</strong><span>Serum Ferritin · Ceruloplasmin</span></div>
+        </div>
+        <div class="action-item">
+          <div class="action-icon">🧬</div>
+          <div class="action-text"><strong>Vitamin D + B12</strong><span>Not yet tested</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ④ TRENDS -->
+    <div class="screen" id="screen-trends">
+      <div class="section-header">Trends <span>&amp; Insights</span></div>
+
+      <div id="insight-container">
+        <div class="loading"><div class="loading-spinner"></div><div style="font-size:12px;font-family:var(--mono)">Loading insights…</div></div>
+      </div>
+
+      <!-- Glucose chart -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div class="card-title" style="margin:0">Fasting Glucose</div>
+          <span class="pill blue">30 days</span>
+        </div>
+        <div class="chart-wrap"><canvas id="chart-glucose"></canvas></div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px;">
+          <div style="font-size:11px;color:var(--text3);font-family:var(--mono)" id="chart-glucose-avg">Avg: —</div>
+          <div style="font-size:11px;font-family:var(--mono)" id="chart-glucose-trend">Trend: —</div>
+        </div>
+      </div>
+
+      <!-- BP chart -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div class="card-title" style="margin:0">Blood Pressure</div>
+          <span class="pill blue">30 days</span>
+        </div>
+        <div class="chart-wrap"><canvas id="chart-bp"></canvas></div>
+        <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:8px;" id="chart-bp-avg">Avg: —</div>
+      </div>
+
+      <!-- Weight chart -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div class="card-title" style="margin:0">Weight</div>
+          <span class="pill blue">30 days</span>
+        </div>
+        <div class="chart-wrap"><canvas id="chart-weight"></canvas></div>
+        <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:8px;" id="chart-weight-trend">Trend: —</div>
+      </div>
+
+      <!-- Walk correlation -->
+      <div class="card">
+        <div class="card-title">Walk ↔ Next Morning Glucose</div>
+        <div id="correlation-walk" style="font-size:13px;color:var(--text2);line-height:1.6;">
+          Need ≥5 paired days to show correlation.
+        </div>
+      </div>
+    </div>
+
+    <!-- ⑤ LABS -->
+    <div class="screen" id="screen-labs">
+      <div class="section-header">Lab <span>Results</span></div>
+
+      <!-- Add lab button -->
+      <button class="btn btn-secondary" style="margin-bottom:14px;" onclick="showLabForm()">+ Add Lab Result</button>
+
+      <!-- Lab add form (hidden by default) -->
+      <div class="card" id="lab-form" style="display:none;">
+        <div class="card-title">New Lab Entry</div>
+        <div class="form-group">
+          <label class="form-label">Test Name</label>
+          <input type="text" class="form-input" id="lab-name" placeholder="e.g. HbA1c" style="font-size:14px;">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Value</label>
+            <input type="number" class="form-input" id="lab-value" placeholder="7.2" inputmode="decimal" step="0.01">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Unit</label>
+            <input type="text" class="form-input" id="lab-unit" placeholder="%" style="font-size:14px;">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input type="date" class="form-input" id="lab-date" style="font-size:14px;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reference Range</label>
+          <input type="text" class="form-input" id="lab-ref" placeholder="e.g. &lt;7.0" style="font-size:14px;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select class="form-input" id="lab-category" style="font-size:14px;">
+            <option>Glucose</option><option>Lipids</option><option>Liver</option>
+            <option>Kidney</option><option>Thyroid</option><option>Haematology</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-input" id="lab-status" style="font-size:14px;">
+            <option>Normal</option><option>High</option><option>Low</option><option>Critical</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary" style="flex:1;" onclick="submitLabEntry()">Save to Notion →</button>
+          <button class="btn btn-secondary btn-sm" onclick="hideLabForm()">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Labs list -->
+      <div class="card">
+        <div class="card-title">Glucose</div>
+        <div id="labs-glucose"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Lipids</div>
+        <div id="labs-lipids"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Liver</div>
+        <div id="labs-liver"></div>
+      </div>
+    </div>
+
+    <!-- ⑥ WHY -->
+    <div class="screen" id="screen-why">
+      <div class="section-header">Why <span>Am I Like This?</span></div>
+
+      <!-- Root cause banner -->
+      <div class="card" style="background:linear-gradient(135deg,rgba(239,68,68,0.08),rgba(249,115,22,0.06));border-color:rgba(239,68,68,0.25);">
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="font-size:28px;flex-shrink:0;">🧬</div>
+          <div>
+            <div style="font-family:var(--sans);font-size:15px;font-weight:800;margin-bottom:4px;">Single Root Cause</div>
+            <div style="font-size:13px;color:var(--text2);line-height:1.6;"><strong style="color:#fca5a5;">Metabolic Syndrome</strong> — insulin resistance + visceral fat + poor diet built silently from age 23 to 33. Every symptom below is downstream of this one root.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Instructions -->
+      <div style="font-size:12px;color:var(--text3);font-family:var(--mono);margin-bottom:14px;text-align:center;">TAP ANY SYMPTOM TO SEE ROOT CAUSE + MECHANISM</div>
+
+      <!-- Symptom cards -->
+      <div id="why-symptoms"></div>
+
+      <!-- Recovery timeline -->
+      <div class="card" style="margin-top:4px;">
+        <div class="card-title">Recovery Timeline If You Act Now</div>
+        <div class="timeline-item" style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+          <div style="font-family:var(--mono);font-size:11px;color:var(--accent2);width:60px;flex-shrink:0;padding-top:2px;">WEEK 1–2</div>
+          <div style="font-size:13px;color:var(--text2);">Post-meal glucose drops with consistent post-dinner walks. <strong style="color:#6ee7b7;">Your own data already confirms this.</strong></div>
+        </div>
+        <div class="timeline-item" style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+          <div style="font-family:var(--mono);font-size:11px;color:var(--accent2);width:60px;flex-shrink:0;padding-top:2px;">MONTH 1</div>
+          <div style="font-size:13px;color:var(--text2);">Eye symptoms controlled with CYNQ DS. Weight –1kg with low-GI diet. BP begins to ease.</div>
+        </div>
+        <div class="timeline-item" style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+          <div style="font-family:var(--mono);font-size:11px;color:var(--accent2);width:60px;flex-shrink:0;padding-top:2px;">MONTH 3</div>
+          <div style="font-size:13px;color:var(--text2);">HbA1c 7.2–7.4%. LDL drops 30–40% on Storvas. ALT begins to fall. <strong style="color:#fcd34d;">Target: HbA1c &lt;7.0%</strong></div>
+        </div>
+        <div class="timeline-item" style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+          <div style="font-family:var(--mono);font-size:11px;color:var(--accent2);width:60px;flex-shrink:0;padding-top:2px;">MONTH 6</div>
+          <div style="font-size:13px;color:var(--text2);">HbA1c &lt;7.0% · LDL &lt;150 · ALT &lt;60. Dry eye less severe. BP stabilising.</div>
+        </div>
+        <div class="timeline-item" style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+          <div style="font-family:var(--mono);font-size:11px;color:var(--accent2);width:60px;flex-shrink:0;padding-top:2px;">YEAR 1</div>
+          <div style="font-size:13px;color:var(--text2);">Corneal nerves partially recover. Dry eye less severe each summer. <strong style="color:#6ee7b7;">Every 1% HbA1c drop = 37% fewer complications (UKPDS).</strong></div>
+        </div>
+        <div class="timeline-item" style="display:flex;gap:12px;padding:10px 0;">
+          <div style="font-family:var(--mono);font-size:11px;color:var(--accent2);width:60px;flex-shrink:0;padding-top:2px;">YEAR 2+</div>
+          <div style="font-size:13px;color:var(--text2);">Liver fat reducing on Fibroscan. Fibrosis regression possible. Cardiac risk normalising. HbA1c &lt;6.5% achievable.</div>
+        </div>
+      </div>
+
+      <!-- Key insight -->
+      <div class="card" style="background:linear-gradient(135deg,rgba(59,130,246,0.08),rgba(16,185,129,0.05));border-color:rgba(59,130,246,0.2);">
+        <div style="font-size:13px;line-height:1.7;color:var(--text2);">
+          💡 <strong style="color:var(--text);">Your eye disease is not an eye problem.</strong> It is a metabolic problem expressing itself through your eyes. Controlling HbA1c from 7.7% to 6.5% is worth more than all eye drops combined.
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- /screens -->
+
+  <!-- NAV -->
+  <nav class="nav">
+    <button class="nav-item active" onclick="goTo('today',this)">
+      <span class="icon">🏠</span>TODAY
+    </button>
+    <button class="nav-item" onclick="goTo('log',this)">
+      <span class="icon">✏️</span>LOG
+    </button>
+    <button class="nav-item" onclick="goTo('status',this)">
+      <span class="icon">📊</span>STATUS
+    </button>
+    <button class="nav-item" onclick="goTo('trends',this)">
+      <span class="icon">📈</span>TRENDS
+    </button>
+    <button class="nav-item" onclick="goTo('why',this)">
+      <span class="icon">🔍</span>WHY
+    </button>
+  </nav>
+
+  <div class="toast" id="toast"></div>
+
+</div><!-- /app -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════
+// CONFIG — replace these with your actual values
+// ═══════════════════════════════════════════════════════
+const CONFIG = {
+  NOTION_TOKEN: 'YOUR_NOTION_TOKEN_HERE',
+  NOTION_DB_DAILY: 'f4b92728-0e74-4132-94a9-9399672ac7bd',
+  NOTION_DB_LABS: 'bdf9e876-ad96-4ae4-b041-ba6fdbdc8918',
+  CLAUDE_API_KEY: 'YOUR_CLAUDE_API_KEY_HERE',
+  // Thresholds
+  GLUCOSE_HIGH: 140,
+  GLUCOSE_WARN: 120,
+  BP_SYS_HIGH: 145,
+  BP_SYS_WARN: 135,
+  WEIGHT_TARGET: 72,
+};
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let state = {
+  logs: [],       // local cache of daily logs
+  labs: [],       // lab results
+  syncQueue: [],  // entries waiting to sync
+  lastSync: null,
+  todayLog: null,
+  insightCache: null,
+  insightDate: null,
+};
+
+// ═══════════════════════════════════════════════════════
+// STORAGE — IndexedDB wrapper (simple key/value)
+// ═══════════════════════════════════════════════════════
+const DB = {
+  save(key, val) {
+    try { localStorage.setItem('hos_' + key, JSON.stringify(val)); } catch(e) {}
+  },
+  load(key, def = null) {
+    try {
+      const v = localStorage.getItem('hos_' + key);
+      return v ? JSON.parse(v) : def;
+    } catch(e) { return def; }
+  }
+};
+
+// ═══════════════════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════════════════
+function today() {
+  return new Date().toISOString().split('T')[0];
+}
+function fmtDate(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+}
+function getHour() { return new Date().getHours(); }
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 2800);
+}
+function setSyncStatus(status) {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  dot.className = 'sync-dot ' + status;
+  lbl.textContent = status === 'synced' ? 'synced' : status === 'pending' ? 'pending' : 'offline';
+}
+function colorClass(val, low, high) {
+  if (val === null || val === undefined) return 'blue';
+  if (val >= high) return 'red';
+  if (val >= low) return 'yellow';
+  return 'green';
+}
+function getToggleVal(id) {
+  const btns = document.querySelectorAll('#' + id + ' .toggle-btn');
+  for (const b of btns) {
+    if (b.classList.contains('active-yes')) return true;
+    if (b.classList.contains('active-no')) return false;
+  }
+  return null;
+}
+
+// ═══════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════
+function goTo(screen, el) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-' + screen).classList.add('active');
+  if (el) el.classList.add('active');
+  if (screen === 'trends') renderTrends();
+  if (screen === 'labs') renderLabs();
+  if (screen === 'status') renderStatus();
+  if (screen === 'why') renderWhyScreen();
+  window.scrollTo(0, 0);
+}
+
+// ═══════════════════════════════════════════════════════
+// LOG FORM
+// ═══════════════════════════════════════════════════════
+function switchLogTab(tab) {
+  document.getElementById('log-morning').style.display = tab === 'morning' ? 'block' : 'none';
+  document.getElementById('log-evening').style.display = tab === 'evening' ? 'block' : 'none';
+  document.getElementById('log-tab-morning').className = 'toggle-btn' + (tab === 'morning' ? ' active-yes' : '');
+  document.getElementById('log-tab-evening').className = 'toggle-btn' + (tab === 'evening' ? ' active-yes' : '');
+  document.getElementById('log-type-label').textContent = tab === 'morning' ? 'Morning' : 'Evening';
+}
+
+function setToggle(groupId, val) {
+  const btns = document.querySelectorAll('#' + groupId + ' .toggle-btn');
+  btns[0].className = 'toggle-btn' + (val === 'yes' ? ' active-yes' : '');
+  btns[1].className = 'toggle-btn' + (val === 'no' ? ' active-no' : '');
+}
+
+function prefillFromYesterday() {
+  if (!state.logs.length) return;
+  const last = state.logs[state.logs.length - 1];
+  if (last['Weight kg']) document.getElementById('m-weight').placeholder = last['Weight kg'];
+  if (last['Sleep Hours']) document.getElementById('m-sleep').placeholder = last['Sleep Hours'];
+}
+
+async function submitMorningLog() {
+  const glucose = parseFloat(document.getElementById('m-glucose').value);
+  const sys = parseFloat(document.getElementById('m-sys').value);
+  const dia = parseFloat(document.getElementById('m-dia').value);
+  const weight = parseFloat(document.getElementById('m-weight').value);
+  const sleep = parseFloat(document.getElementById('m-sleep').value);
+  const sugar = parseFloat(document.getElementById('m-sugar').value) || 0;
+  const notes = document.getElementById('m-notes').value || '';
+  const morningMed = getToggleVal('toggle-istamet-am');
+  const evitol = getToggleVal('toggle-evitol');
+
+  if (!glucose && !sys && !weight) {
+    showToast('Fill at least one vital', 'error'); return;
+  }
+
+  const entry = {
+    date: today(),
+    type: 'morning',
+    'Fasting Glucose': glucose || null,
+    'BP Systolic': sys || null,
+    'BP Diastolic': dia || null,
+    'BP': (sys && dia) ? sys + '/' + dia : '',
+    'Weight kg': weight || null,
+    'Sleep Hours': sleep || null,
+    'Sugar Intake (g)': sugar,
+    'Morning Medication': morningMed === true,
+    'Notes': notes + (evitol === false ? ' [Evitol/Reheptin skipped]' : ''),
+    'Name': today() + ' morning',
+  };
+
+  // Save locally first
+  const todayIdx = state.logs.findIndex(l => l.date === today() && l.type === 'morning');
+  if (todayIdx >= 0) state.logs[todayIdx] = entry;
+  else state.logs.push(entry);
+  DB.save('logs', state.logs);
+  DB.save('morning_done_' + today(), true);
+
+  showToast('Morning log saved ✓');
+  clearMorningForm();
+  renderToday();
+
+  // Sync to Notion
+  await syncToNotion(entry, 'daily');
+}
+
+async function submitEveningLog() {
+  const postGlucose = parseFloat(document.getElementById('e-glucose').value);
+  const walk = getToggleVal('toggle-walk');
+  const istamet_pm = getToggleVal('toggle-istamet-pm');
+  const storvas = getToggleVal('toggle-storvas');
+
+  // Find today's morning entry and update it, or create new
+  const todayIdx = state.logs.findIndex(l => l.date === today() && l.type === 'morning');
+  let entry;
+  if (todayIdx >= 0) {
+    entry = state.logs[todayIdx];
+    entry['Post Dinner Glucose'] = postGlucose || null;
+    entry['Post dinner Walk'] = walk === true;
+    entry['Night Medication'] = istamet_pm === true;
+    entry['Notes'] = (entry['Notes'] || '') + (storvas === false ? ' [Storvas/Lipaglyn skipped]' : '');
+    state.logs[todayIdx] = entry;
+  } else {
+    entry = {
+      date: today(), type: 'morning',
+      'Post Dinner Glucose': postGlucose || null,
+      'Post dinner Walk': walk === true,
+      'Night Medication': istamet_pm === true,
+      'Morning Medication': false,
+      'Name': today() + ' log',
+    };
+    state.logs.push(entry);
+  }
+  DB.save('logs', state.logs);
+  DB.save('evening_done_' + today(), true);
+
+  showToast('Evening log saved ✓');
+  renderToday();
+  await syncToNotion(entry, 'daily');
+}
+
+function clearMorningForm() {
+  ['m-glucose','m-sys','m-dia','m-weight','m-sleep','m-sugar','m-notes'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// NOTION SYNC
+// ═══════════════════════════════════════════════════════
+async function syncToNotion(entry, type) {
+  setSyncStatus('pending');
+  try {
+    if (CONFIG.NOTION_TOKEN === 'YOUR_NOTION_TOKEN_HERE') {
+      setSyncStatus('synced'); // demo mode
+      return;
+    }
+
+    const props = {
+      'Name': { title: [{ text: { content: entry['Name'] || entry.date } }] },
+      'Date': { date: { start: entry.date } },
+    };
+    if (entry['Fasting Glucose']) props['Fasting Glucose'] = { number: entry['Fasting Glucose'] };
+    if (entry['BP Systolic']) props['BP Systolic'] = { number: entry['BP Systolic'] };
+    if (entry['BP Diastolic']) props['BP Diastolic'] = { number: entry['BP Diastolic'] };
+    if (entry['BP']) props['BP'] = { rich_text: [{ text: { content: entry['BP'] } }] };
+    if (entry['Weight kg']) props['Weight kg'] = { number: entry['Weight kg'] };
+    if (entry['Sleep Hours']) props['Sleep Hours'] = { number: entry['Sleep Hours'] };
+    if (entry['Sugar Intake (g)'] !== undefined) props['Sugar Intake (g)'] = { number: entry['Sugar Intake (g)'] };
+    if (entry['Post Dinner Glucose']) props['Post Dinner Glucose'] = { number: entry['Post Dinner Glucose'] };
+    props['Morning Medication'] = { checkbox: !!entry['Morning Medication'] };
+    props['Night Medication'] = { checkbox: !!entry['Night Medication'] };
+    props['Post dinner Walk'] = { checkbox: !!entry['Post dinner Walk'] };
+    if (entry['Notes']) props['Notes'] = { rich_text: [{ text: { content: entry['Notes'] } }] };
+
+    const res = await fetch('https://api.notion.com/v1/pages', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + CONFIG.NOTION_TOKEN,
+        'Content-Type': 'application/json',
+        'Notion-Version': '2022-06-28',
+      },
+      body: JSON.stringify({
+        parent: { database_id: CONFIG.NOTION_DB_DAILY },
+        properties: props,
+      }),
+    });
+    if (res.ok) {
+      setSyncStatus('synced');
+      state.lastSync = new Date().toISOString();
+      DB.save('lastSync', state.lastSync);
+    } else {
+      throw new Error(await res.text());
+    }
+  } catch(e) {
+    setSyncStatus('error');
+    state.syncQueue.push(entry);
+    DB.save('syncQueue', state.syncQueue);
+    showToast('Saved offline, will sync later', 'error');
+  }
+}
+
+async function submitLabEntry() {
+  const name = document.getElementById('lab-name').value;
+  const value = parseFloat(document.getElementById('lab-value').value);
+  const unit = document.getElementById('lab-unit').value;
+  const date = document.getElementById('lab-date').value || today();
+  const ref = document.getElementById('lab-ref').value;
+  const cat = document.getElementById('lab-category').value;
+  const status = document.getElementById('lab-status').value;
+
+  if (!name || !value) { showToast('Name and value required', 'error'); return; }
+
+  const entry = { 'Test Name': name, Value: value, Unit: unit, Date: date,
+    'Reference Range': ref, Category: cat, Status: status };
+
+  state.labs.push(entry);
+  DB.save('labs', state.labs);
+  showToast('Lab saved ✓');
+  hideLabForm();
+  renderLabs();
+
+  // Sync lab to Notion
+  try {
+    if (CONFIG.NOTION_TOKEN === 'YOUR_NOTION_TOKEN_HERE') return;
+    await fetch('https://api.notion.com/v1/pages', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + CONFIG.NOTION_TOKEN,
+        'Content-Type': 'application/json',
+        'Notion-Version': '2022-06-28',
+      },
+      body: JSON.stringify({
+        parent: { database_id: CONFIG.NOTION_DB_LABS },
+        properties: {
+          'Test Name': { title: [{ text: { content: name } }] },
+          'Date': { date: { start: date } },
+          'Value': { number: value },
+          'Unit': { rich_text: [{ text: { content: unit } }] },
+          'Reference Range': { rich_text: [{ text: { content: ref } }] },
+          'Category': { select: { name: cat } },
+          'Status': { select: { name: status } },
+        },
+      }),
+    });
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════
+// TODAY SCREEN
+// ═══════════════════════════════════════════════════════
+function renderToday() {
+  // Date
+  const now = new Date();
+  document.getElementById('header-date').textContent =
+    now.toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'short' }).toUpperCase();
+
+  // Greeting
+  const h = getHour();
+  const greetings = h < 12 ? '☀️' : h < 17 ? '🌤️' : '🌙';
+  document.getElementById('today-greeting').textContent = greetings;
+
+  // Log check status
+  const mDone = DB.load('morning_done_' + today(), false);
+  const eDone = DB.load('evening_done_' + today(), false);
+  const todayLog = state.logs.find(l => l.date === today());
+  const medsOk = todayLog && todayLog['Morning Medication'];
+  const walkOk = todayLog && todayLog['Post dinner Walk'];
+
+  setCheckItem('morning-check', mDone, '🌅');
+  setCheckItem('evening-check', eDone, '🌙');
+  setCheckItem('meds-check', medsOk, '💊');
+  setCheckItem('walk-check', walkOk, '🚶');
+
+  // Latest metrics
+  const latest = getLatestLog();
+  const mg = document.getElementById('today-metrics');
+  mg.innerHTML = '';
+  if (latest) {
+    if (latest['Fasting Glucose']) mg.innerHTML += metricTile('FASTING GLUCOSE', latest['Fasting Glucose'], 'mg/dL', colorClass(latest['Fasting Glucose'], CONFIG.GLUCOSE_WARN, CONFIG.GLUCOSE_HIGH));
+    if (latest['BP Systolic']) mg.innerHTML += metricTile('BP', latest['BP Systolic'] + '/' + (latest['BP Diastolic'] || '?'), 'mmHg', colorClass(latest['BP Systolic'], CONFIG.BP_SYS_WARN, CONFIG.BP_SYS_HIGH));
+    if (latest['Weight kg']) mg.innerHTML += metricTile('WEIGHT', latest['Weight kg'], 'kg', colorClass(latest['Weight kg'], CONFIG.WEIGHT_TARGET, CONFIG.WEIGHT_TARGET + 3));
+    if (latest['Sleep Hours']) mg.innerHTML += metricTile('SLEEP', latest['Sleep Hours'], 'hrs', colorClass(8 - latest['Sleep Hours'], 1, 2));
+  } else {
+    mg.innerHTML = '<div style="color:var(--text3);font-size:13px;font-family:var(--mono);grid-column:1/-1">No readings yet — tap Log to start</div>';
+  }
+
+  // Alerts
+  renderAlerts();
+
+  // Actions
+  renderActions(todayLog, mDone, eDone);
+
+  // Weekly summary
+  renderWeeklySummary();
+}
+
+function setCheckItem(id, done, emoji) {
+  const el = document.getElementById(id);
+  el.className = 'log-check-item ' + (done ? 'done' : 'pending');
+  el.querySelector('.log-check-emoji').textContent = done ? '✅' : emoji;
+}
+
+function metricTile(label, val, unit, cls) {
+  return `<div class="metric-tile ${cls}">
+    <div class="metric-label">${label}</div>
+    <div class="metric-value ${cls}">${val}</div>
+    <div class="metric-unit">${unit}</div>
+  </div>`;
+}
+
+function getLatestLog() {
+  if (!state.logs.length) return null;
+  return [...state.logs].reverse().find(l => l['Fasting Glucose'] || l['BP Systolic']);
+}
+
+function renderAlerts() {
+  const container = document.getElementById('alerts-container');
+  const alerts = [];
+
+  // Check last 3 days glucose
+  const recent = state.logs.slice(-3).filter(l => l['Fasting Glucose']);
+  if (recent.length >= 2) {
+    const rising = recent.every((l, i) => i === 0 || l['Fasting Glucose'] >= recent[i-1]['Fasting Glucose']);
+    if (rising && recent[recent.length-1]['Fasting Glucose'] > 130) {
+      alerts.push({ type: 'critical', text: '<strong>Glucose rising</strong> 3 consecutive readings above 130. Review dinner carbs + walk compliance.' });
+    }
+  }
+
+  // Medication miss check
+  const last7 = state.logs.slice(-7);
+  const missedMeds = last7.filter(l => l['Morning Medication'] === false).length;
+  if (missedMeds >= 2) {
+    alerts.push({ type: 'warning', text: `<strong>Missed morning meds ${missedMeds}x</strong> this week. Istamet must be taken with food.` });
+  }
+
+  // Walk miss
+  const missedWalk = last7.filter(l => l['Post dinner Walk'] === false).length;
+  if (missedWalk >= 4) {
+    alerts.push({ type: 'warning', text: `<strong>Walk skipped ${missedWalk} days</strong> this week. Post-dinner walk directly improves morning glucose.` });
+  }
+
+  // Single critical BP
+  const latestBP = getLatestLog();
+  if (latestBP && latestBP['BP Systolic'] > 160) {
+    alerts.push({ type: 'critical', text: `<strong>BP critically high: ${latestBP['BP Systolic']}/${latestBP['BP Diastolic']}</strong> — consult Dr. Amit Sharma if repeated.` });
+  }
+
+  // Show max 2
+  container.innerHTML = alerts.slice(0, 2).map(a =>
+    `<div class="alert-banner ${a.type}">
+      <div class="alert-icon">${a.type === 'critical' ? '🚨' : '⚠️'}</div>
+      <div class="alert-text">${a.text}</div>
+    </div>`
+  ).join('');
+}
+
+function renderActions(todayLog, mDone, eDone) {
+  const actions = [];
+  const h = getHour();
+
+  if (!mDone) actions.push({ icon: '🌅', title: 'Log morning vitals', desc: 'Fasting glucose + BP + weight' });
+  if (mDone && todayLog && !todayLog['Morning Medication']) {
+    actions.push({ icon: '💊', title: 'Take Istamet AM with breakfast', desc: 'Must be taken during or right after food' });
+  }
+  if (h >= 19 && !eDone) actions.push({ icon: '🌙', title: 'Log evening check-in', desc: 'Post-dinner glucose + walk + night meds' });
+  if (h >= 18 && (!todayLog || !todayLog['Post dinner Walk'])) {
+    actions.push({ icon: '🚶', title: 'Walk 30 min after dinner', desc: 'Lowers tomorrow\'s fasting glucose by 10-20 mg/dL' });
+  }
+  if (h >= 20 && (!todayLog || !todayLog['Night Medication'])) {
+    actions.push({ icon: '💊', title: 'Take night medications', desc: 'Istamet PM + Storvas + Lipaglyn at bedtime' });
+  }
+
+  // Always add water reminder if not enough logged
+  actions.push({ icon: '💧', title: 'Drink 8–10 glasses water', desc: 'Supports liver function and metabolic health' });
+
+  const container = document.getElementById('actions-container');
+  container.innerHTML = actions.slice(0, 4).map(a =>
+    `<div class="action-item">
+      <div class="action-icon">${a.icon}</div>
+      <div class="action-text"><strong>${a.title}</strong><span>${a.desc}</span></div>
+    </div>`
+  ).join('');
+}
+
+function renderWeeklySummary() {
+  const last7 = state.logs.filter(l => {
+    const d = new Date(l.date);
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
+    return d >= cutoff;
+  });
+  const ws = document.getElementById('weekly-summary');
+  if (last7.length < 2) {
+    ws.innerHTML = '<div style="color:var(--text3);font-size:12px;font-family:var(--mono)">Log 3+ days to see weekly summary</div>';
+    return;
+  }
+  const glucoseVals = last7.filter(l => l['Fasting Glucose']).map(l => l['Fasting Glucose']);
+  const walks = last7.filter(l => l['Post dinner Walk'] === true).length;
+  const meds = last7.filter(l => l['Morning Medication'] === true).length;
+  const avgG = glucoseVals.length ? Math.round(glucoseVals.reduce((a,b) => a+b,0)/glucoseVals.length) : null;
+
+  const prev7 = state.logs.filter(l => {
+    const d = new Date(l.date);
+    const from = new Date(); from.setDate(from.getDate() - 14);
+    const to = new Date(); to.setDate(to.getDate() - 7);
+    return d >= from && d < to;
+  });
+  const prevG = prev7.filter(l=>l['Fasting Glucose']).map(l=>l['Fasting Glucose']);
+  const prevAvg = prevG.length ? Math.round(prevG.reduce((a,b)=>a+b,0)/prevG.length) : null;
+
+  let glucoseTrendText = '';
+  if (avgG && prevAvg) {
+    const diff = avgG - prevAvg;
+    if (Math.abs(diff) < 5) glucoseTrendText = '→ Stable vs last week';
+    else if (diff < 0) glucoseTrendText = `↓ Down ${Math.abs(diff)} vs last week 🟢`;
+    else glucoseTrendText = `↑ Up ${diff} vs last week 🔴`;
+  }
+
+  ws.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;">
+        <div style="font-family:var(--mono);font-size:18px;color:${avgG && avgG > 140 ? '#fca5a5' : '#6ee7b7'}">${avgG || '—'}</div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px">AVG GLUCOSE</div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;">
+        <div style="font-family:var(--mono);font-size:18px;color:${walks >= 5 ? '#6ee7b7' : '#fcd34d'}">${walks}/7</div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px">WALKS DONE</div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;">
+        <div style="font-family:var(--mono);font-size:18px;color:${meds >= 6 ? '#6ee7b7' : '#fca5a5'}">${Math.round(meds/7*100)}%</div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px">MED ADHERENCE</div>
+      </div>
+    </div>
+    ${glucoseTrendText ? `<div style="font-size:12px;color:var(--text2);font-family:var(--mono);margin-top:10px;text-align:center;">${glucoseTrendText}</div>` : ''}
+  `;
+}
+
+// ═══════════════════════════════════════════════════════
+// STATUS SCREEN
+// ═══════════════════════════════════════════════════════
+function renderStatus() {
+  const latest = getLatestLog();
+  if (latest) {
+    if (latest['Fasting Glucose']) {
+      document.getElementById('s-glucose-detail').textContent =
+        `FBG ${latest['Fasting Glucose']} · HbA1c 7.7% (Feb 26)`;
+      document.getElementById('tv-fbg').textContent = latest['Fasting Glucose'];
+    }
+    if (latest['BP Systolic']) {
+      document.getElementById('s-bp-detail').textContent =
+        `Last: ${latest['BP Systolic']}/${latest['BP Diastolic']}`;
+    }
+    if (latest['Weight kg']) {
+      document.getElementById('tv-weight').textContent = latest['Weight kg'] + ' kg';
+    }
+  }
+
+  // Medication adherence
+  const last7 = state.logs.slice(-7);
+  const adherence = last7.length ? Math.round(last7.filter(l => l['Morning Medication']).length / Math.max(last7.length,1) * 100) : null;
+  if (adherence !== null) {
+    document.getElementById('s-meds-detail').textContent = `This week: ${adherence}%`;
+    const pill = document.getElementById('s-meds-pill');
+    if (adherence >= 85) { pill.className = 'pill green'; pill.textContent = 'GOOD'; }
+    else if (adherence >= 70) { pill.className = 'pill yellow'; pill.textContent = 'FAIR'; }
+    else { pill.className = 'pill red'; pill.textContent = 'POOR'; }
+  }
+
+  // Overall risk
+  const riskCard = document.getElementById('overall-risk-card');
+  const riskLabel = document.getElementById('overall-risk-label');
+  const riskEmoji = document.getElementById('overall-risk-emoji');
+  riskLabel.textContent = 'MODERATE–HIGH RISK';
+  riskEmoji.textContent = '🟠';
+  riskCard.style.borderColor = 'rgba(249,115,22,0.4)';
+  riskCard.style.background = 'rgba(249,115,22,0.06)';
+}
+
+// ═══════════════════════════════════════════════════════
+// TRENDS SCREEN
+// ═══════════════════════════════════════════════════════
+let chartsRendered = false;
+function renderTrends() {
+  renderInsights();
+  renderCharts();
+  renderCorrelation();
+}
+
+async function renderInsights() {
+  const container = document.getElementById('insight-container');
+  const todayStr = today();
+
+  // Use cache if same day
+  if (state.insightDate === todayStr && state.insightCache) {
+    container.innerHTML = state.insightCache;
+    return;
+  }
+
+  // Generate insights from local data (rule-based, no API needed for basic)
+  const insights = generateRuleBasedInsights();
+
+  // If API configured and we have enough data, call Claude
+  if (CONFIG.CLAUDE_API_KEY !== 'YOUR_CLAUDE_API_KEY_HERE' && state.logs.length >= 5) {
+    container.innerHTML = '<div class="loading"><div class="loading-spinner"></div><div style="font-size:12px;font-family:var(--mono)">Generating insights…</div></div>';
+    try {
+      const aiInsight = await getClaudeInsight();
+      insights.unshift({ title: 'AI Weekly Analysis', conf: 'HIGH', text: aiInsight });
+    } catch(e) {}
+  }
+
+  const html = insights.map(ins => `
+    <div class="insight-card">
+      <div class="insight-header">
+        <div class="insight-title">💡 ${ins.title}</div>
+        <div class="insight-conf">Confidence: ${ins.conf}</div>
+      </div>
+      <div class="insight-text">${ins.text}</div>
+    </div>
+  `).join('');
+
+  container.innerHTML = html || '<div style="color:var(--text3);font-size:13px;padding:8px;">Log 5+ days to see insights.</div>';
+  state.insightCache = html;
+  state.insightDate = todayStr;
+}
+
+function generateRuleBasedInsights() {
+  const insights = [];
+  const last7 = state.logs.filter(l => l['Fasting Glucose']).slice(-7);
+  if (last7.length < 3) return insights;
+
+  const glucoseVals = last7.map(l => l['Fasting Glucose']);
+  const avg = Math.round(glucoseVals.reduce((a,b)=>a+b,0)/glucoseVals.length);
+  const max = Math.max(...glucoseVals);
+  const min = Math.min(...glucoseVals);
+
+  if (avg < 130) insights.push({ title: 'Glucose Improving', conf: 'HIGH', text: `Your 7-day average glucose is ${avg} mg/dL — showing improvement toward the <130 target. Keep current routine.` });
+  else if (avg > 150) insights.push({ title: 'Glucose Elevated', conf: 'HIGH', text: `7-day average is ${avg} mg/dL (range ${min}–${max}). Focus on post-dinner walks and low-GI dinners.` });
+
+  const walks = state.logs.slice(-7).filter(l => l['Post dinner Walk'] === true).length;
+  if (walks >= 5) insights.push({ title: 'Walk Streak 🔥', conf: 'HIGH', text: `${walks}/7 walks completed this week. This is your single most effective glucose intervention.` });
+  else if (walks <= 2) insights.push({ title: 'Walk Compliance Low', conf: 'HIGH', text: `Only ${walks}/7 walks this week. Historical data shows walks reduce next-morning glucose by 10–20 mg/dL.` });
+
+  return insights;
+}
+
+async function getClaudeInsight() {
+  const last14 = state.logs.slice(-14);
+  const summary = last14.map(l =>
+    `${l.date}: FBG=${l['Fasting Glucose']||'?'}, BP=${l['BP Systolic']||'?'}/${l['BP Diastolic']||'?'}, Walk=${l['Post dinner Walk']?'Yes':'No'}, MedAM=${l['Morning Medication']?'Yes':'No'}`
+  ).join('\n');
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': CONFIG.CLAUDE_API_KEY, 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 300,
+      messages: [{
+        role: 'user',
+        content: `You are a health data analyst reviewing 2 weeks of vitals for a 33-year-old male with T2DM, Stage 1 HTN, Dyslipidaemia (LDL 227), MASLD/MASH on Istamet 50/500 BD + Storvas 20mg + Lipaglyn 4mg. 
+
+Data:
+${summary}
+
+Give a 2-sentence weekly insight. Be specific. Mention actual numbers. Focus on glucose trend and walk correlation. Do not mention medication changes. Confidence level: state HIGH/MEDIUM/LOW.`
+      }]
+    })
+  });
+  const data = await res.json();
+  return data.content?.[0]?.text || 'Unable to generate insight.';
+}
+
+function renderCharts() {
+  if (chartsRendered) return; // charts are persistent
+
+  const logs30 = state.logs.slice(-30);
+  const labels = logs30.map(l => fmtDate(l.date));
+
+  // Glucose chart
+  const gCtx = document.getElementById('chart-glucose').getContext('2d');
+  const glucoseData = logs30.map(l => l['Fasting Glucose'] || null);
+  new Chart(gCtx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: glucoseData,
+        borderColor: '#60a5fa',
+        backgroundColor: 'rgba(96,165,250,0.1)',
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: glucoseData.map(v => v > 140 ? '#ef4444' : v > 120 ? '#f59e0b' : '#10b981'),
+        tension: 0.3, fill: true, spanGaps: true,
+      }]
+    },
+    options: chartOpts('#60a5fa', 130)
+  });
+
+  const gAvg = glucoseData.filter(Boolean);
+  if (gAvg.length) {
+    const avg = Math.round(gAvg.reduce((a,b)=>a+b,0)/gAvg.length);
+    document.getElementById('chart-glucose-avg').textContent = `Avg: ${avg} mg/dL`;
+    const first = gAvg.slice(0, Math.ceil(gAvg.length/2));
+    const last = gAvg.slice(Math.floor(gAvg.length/2));
+    const fAvg = first.reduce((a,b)=>a+b,0)/first.length;
+    const lAvg = last.reduce((a,b)=>a+b,0)/last.length;
+    const diff = Math.round(lAvg - fAvg);
+    document.getElementById('chart-glucose-trend').textContent =
+      diff < -3 ? `↓ Improving (${diff})` : diff > 3 ? `↑ Rising (+${diff})` : '→ Stable';
+    document.getElementById('chart-glucose-trend').style.color =
+      diff < -3 ? '#6ee7b7' : diff > 3 ? '#fca5a5' : '#fcd34d';
+  }
+
+  // BP chart
+  const bCtx = document.getElementById('chart-bp').getContext('2d');
+  new Chart(bCtx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Systolic', data: logs30.map(l => l['BP Systolic'] || null),
+          borderColor: '#f97316', backgroundColor: 'rgba(249,115,22,0.08)',
+          borderWidth: 2, pointRadius: 2, tension: 0.3, fill: true, spanGaps: true },
+        { label: 'Diastolic', data: logs30.map(l => l['BP Diastolic'] || null),
+          borderColor: '#fbbf24', backgroundColor: 'transparent',
+          borderWidth: 1.5, pointRadius: 2, tension: 0.3, spanGaps: true },
+      ]
+    },
+    options: chartOpts('#f97316', 130)
+  });
+
+  const sysVals = logs30.map(l => l['BP Systolic']).filter(Boolean);
+  if (sysVals.length) {
+    const avg = Math.round(sysVals.reduce((a,b)=>a+b,0)/sysVals.length);
+    document.getElementById('chart-bp-avg').textContent = `Avg Systolic: ${avg} mmHg`;
+  }
+
+  // Weight chart
+  const wCtx = document.getElementById('chart-weight').getContext('2d');
+  new Chart(wCtx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: logs30.map(l => l['Weight kg'] || null),
+        borderColor: '#a78bfa',
+        backgroundColor: 'rgba(167,139,250,0.08)',
+        borderWidth: 2, pointRadius: 3, tension: 0.3, fill: true, spanGaps: true,
+      }]
+    },
+    options: { ...chartOpts('#a78bfa', 72), plugins: { ...chartOpts('#a78bfa',72).plugins,
+      annotation: undefined } }
+  });
+
+  const wVals = logs30.map(l => l['Weight kg']).filter(Boolean);
+  if (wVals.length >= 2) {
+    const diff = (wVals[wVals.length-1] - wVals[0]).toFixed(1);
+    document.getElementById('chart-weight-trend').textContent =
+      diff < 0 ? `↓ ${Math.abs(diff)} kg lost 🟢` : diff > 0 ? `↑ +${diff} kg gained` : '→ Stable';
+    document.getElementById('chart-weight-trend').style.color = diff < 0 ? '#6ee7b7' : diff > 0 ? '#fca5a5' : '#fcd34d';
+  }
+
+  chartsRendered = true;
+}
+
+function chartOpts(color, targetLine) {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: {
+      backgroundColor: '#1e2d47', titleColor: '#94a3b8',
+      bodyColor: '#e2e8f0', borderColor: '#1e2d47', borderWidth: 1,
+      titleFont: { family: 'DM Mono', size: 10 },
+      bodyFont: { family: 'DM Mono', size: 12 },
+    }},
+    scales: {
+      x: { ticks: { color: '#475569', font: { family: 'DM Mono', size: 9 }, maxTicksLimit: 6 },
+           grid: { color: 'rgba(30,45,71,0.5)' } },
+      y: { ticks: { color: '#475569', font: { family: 'DM Mono', size: 9 } },
+           grid: { color: 'rgba(30,45,71,0.5)' } },
+    }
+  };
+}
+
+function renderCorrelation() {
+  const paired = state.logs.filter((l, i) => {
+    if (!l['Post dinner Walk'] === undefined) return false;
+    const nextDay = state.logs.find(n => {
+      const d1 = new Date(l.date); d1.setDate(d1.getDate() + 1);
+      return n.date === d1.toISOString().split('T')[0] && n['Fasting Glucose'];
+    });
+    return nextDay && l['Fasting Glucose'];
+  });
+
+  const el = document.getElementById('correlation-walk');
+  if (paired.length < 5) {
+    el.textContent = `Need ${5 - paired.length} more paired days to show walk ↔ glucose correlation.`;
+    return;
+  }
+
+  const withWalk = paired.filter(l => l['Post dinner Walk'] === true);
+  const withoutWalk = paired.filter(l => l['Post dinner Walk'] === false);
+
+  const avgWith = withWalk.length ? Math.round(withWalk.reduce((a,l) => {
+    const n = state.logs.find(x => { const d = new Date(l.date); d.setDate(d.getDate()+1); return x.date === d.toISOString().split('T')[0]; });
+    return a + (n?.['Fasting Glucose'] || 0);
+  }, 0) / withWalk.length) : null;
+
+  const avgWithout = withoutWalk.length ? Math.round(withoutWalk.reduce((a,l) => {
+    const n = state.logs.find(x => { const d = new Date(l.date); d.setDate(d.getDate()+1); return x.date === d.toISOString().split('T')[0]; });
+    return a + (n?.['Fasting Glucose'] || 0);
+  }, 0) / withoutWalk.length) : null;
+
+  if (avgWith && avgWithout) {
+    const diff = avgWithout - avgWith;
+    const conf = paired.length >= 10 ? 'HIGH' : 'MEDIUM';
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:10px;text-align:center;">
+          <div style="font-family:var(--mono);font-size:20px;color:#6ee7b7">${avgWith}</div>
+          <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px">Walk done</div>
+        </div>
+        <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:10px;text-align:center;">
+          <div style="font-family:var(--mono);font-size:20px;color:#fca5a5">${avgWithout}</div>
+          <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px">Walk skipped</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--text2);">Walk reduces next-morning glucose by ~<strong style="color:#6ee7b7">${diff} mg/dL</strong> on average. Confidence: ${conf} (${paired.length} days)</div>
+    `;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// LABS SCREEN
+// ═══════════════════════════════════════════════════════
+const BASELINE_LABS = [
+  // Apr 2025
+  { 'Test Name': 'HbA1c', Value: 6.8, Unit: '%', Date: '2025-04-18', 'Reference Range': '<7.0', Category: 'Glucose', Status: 'High' },
+  { 'Test Name': 'LDL Cholesterol', Value: 181, Unit: 'mg/dL', Date: '2025-04-18', 'Reference Range': '<100', Category: 'Lipids', Status: 'High' },
+  { 'Test Name': 'HDL Cholesterol', Value: 33, Unit: 'mg/dL', Date: '2025-04-18', 'Reference Range': '>60', Category: 'Lipids', Status: 'Low' },
+  { 'Test Name': 'Triglycerides', Value: 238, Unit: 'mg/dL', Date: '2025-04-18', 'Reference Range': '<150', Category: 'Lipids', Status: 'High' },
+  { 'Test Name': 'Total Cholesterol', Value: 246, Unit: 'mg/dL', Date: '2025-04-18', 'Reference Range': '<200', Category: 'Lipids', Status: 'High' },
+  { 'Test Name': 'SGPT / ALT', Value: 41, Unit: 'U/L', Date: '2025-04-18', 'Reference Range': '<50', Category: 'Liver', Status: 'Normal' },
+  { 'Test Name': 'SGOT / AST', Value: 25, Unit: 'U/L', Date: '2025-04-18', 'Reference Range': '<46', Category: 'Liver', Status: 'Normal' },
+  // Feb 2026
+  { 'Test Name': 'HbA1c', Value: 7.7, Unit: '%', Date: '2026-02-27', 'Reference Range': '<7.0', Category: 'Glucose', Status: 'High' },
+  { 'Test Name': 'Fasting Glucose', Value: 150, Unit: 'mg/dL', Date: '2026-02-27', 'Reference Range': '<100', Category: 'Glucose', Status: 'High' },
+  { 'Test Name': 'LDL Cholesterol', Value: 227.6, Unit: 'mg/dL', Date: '2026-02-27', 'Reference Range': '<100', Category: 'Lipids', Status: 'Critical' },
+  { 'Test Name': 'Total Cholesterol', Value: 324, Unit: 'mg/dL', Date: '2026-02-27', 'Reference Range': '<200', Category: 'Lipids', Status: 'Critical' },
+  { 'Test Name': 'Triglycerides', Value: 237, Unit: 'mg/dL', Date: '2026-02-27', 'Reference Range': '<150', Category: 'Lipids', Status: 'High' },
+  { 'Test Name': 'HDL Cholesterol', Value: 41, Unit: 'mg/dL', Date: '2026-02-27', 'Reference Range': '>60', Category: 'Lipids', Status: 'Low' },
+  { 'Test Name': 'SGPT / ALT', Value: 84, Unit: 'U/L', Date: '2026-02-27', 'Reference Range': '<50', Category: 'Liver', Status: 'High' },
+  { 'Test Name': 'SGOT / AST', Value: 56, Unit: 'U/L', Date: '2026-02-27', 'Reference Range': '<46', Category: 'Liver', Status: 'High' },
+  { 'Test Name': 'Fibroscan CAP', Value: 347, Unit: 'dB/m', Date: '2026-03-06', 'Reference Range': '<238', Category: 'Liver', Status: 'Critical' },
+  { 'Test Name': 'Fibroscan LSM', Value: 4.8, Unit: 'kPa', Date: '2026-03-06', 'Reference Range': '<7.0', Category: 'Liver', Status: 'Normal' },
+];
+
+function renderLabs() {
+  const allLabs = [...BASELINE_LABS, ...state.labs].sort((a,b) => b.Date > a.Date ? 1 : -1);
+  const cats = ['Glucose', 'Lipids', 'Liver'];
+  cats.forEach(cat => {
+    const el = document.getElementById('labs-' + cat.toLowerCase());
+    if (!el) return;
+    const catLabs = allLabs.filter(l => l.Category === cat);
+    if (!catLabs.length) { el.innerHTML = '<div style="color:var(--text3);font-size:12px;font-family:var(--mono)">No entries</div>'; return; }
+
+    // Group by test name, show latest first with trend
+    const byName = {};
+    catLabs.forEach(l => {
+      if (!byName[l['Test Name']]) byName[l['Test Name']] = [];
+      byName[l['Test Name']].push(l);
+    });
+
+    el.innerHTML = Object.entries(byName).map(([name, entries]) => {
+      const latest = entries[0];
+      const prev = entries[1];
+      const statusColor = { 'Normal': '#6ee7b7', 'High': '#fca5a5', 'Low': '#fcd34d', 'Critical': '#f87171' };
+      let trend = '';
+      if (prev) {
+        const diff = latest.Value - prev.Value;
+        const pct = Math.round(Math.abs(diff)/prev.Value*100);
+        trend = diff < 0 ? `<span style="color:#6ee7b7;font-size:10px">↓${pct}%</span>` :
+                diff > 0 ? `<span style="color:#fca5a5;font-size:10px">↑${pct}%</span>` : '';
+      }
+      return `<div class="lab-row">
+        <div><div class="lab-name">${name}</div><div class="lab-date">${fmtDate(latest.Date)}</div></div>
+        <div class="lab-val">
+          <div class="lab-num" style="color:${statusColor[latest.Status]||'var(--text)'}">${latest.Value} ${latest.Unit} ${trend}</div>
+          <div class="lab-ref">Ref: ${latest['Reference Range']}</div>
+        </div>
+      </div>`;
+    }).join('');
+  });
+}
+
+function showLabForm() {
+  document.getElementById('lab-form').style.display = 'block';
+  document.getElementById('lab-date').value = today();
+  document.getElementById('lab-form').scrollIntoView({ behavior: 'smooth' });
+}
+function hideLabForm() {
+  document.getElementById('lab-form').style.display = 'none';
+  ['lab-name','lab-value','lab-unit','lab-ref'].forEach(id => document.getElementById(id).value = '');
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+function init() {
+  // Load persisted data
+  state.logs = DB.load('logs', []);
+  state.labs = DB.load('labs', []);
+  state.syncQueue = DB.load('syncQueue', []);
+  state.lastSync = DB.load('lastSync', null);
+
+  // Auto-set evening tab based on time
+  if (getHour() >= 19) switchLogTab('evening');
+
+  // Prefill from yesterday
+  prefillFromYesterday();
+
+  // Render
+  renderToday();
+  setSyncStatus(state.lastSync ? 'synced' : 'pending');
+
+  // Date in header
+  const now = new Date();
+  document.getElementById('header-date').textContent =
+    now.toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'short' }).toUpperCase();
+
+  // Retry sync queue if online
+  if (navigator.onLine && state.syncQueue.length > 0) {
+    state.syncQueue.forEach(e => syncToNotion(e, 'daily'));
+    state.syncQueue = [];
+    DB.save('syncQueue', []);
+  }
+}
+
+window.addEventListener('load', init);
+window.addEventListener('online', () => {
+  if (state.syncQueue.length) {
+    state.syncQueue.forEach(e => syncToNotion(e, 'daily'));
+    state.syncQueue = []; DB.save('syncQueue', []);
+  }
+});
+
+// ═══════════════════════════════════════════════════════
+// WHY SCREEN — SYMPTOM ↔ ROOT CAUSE ENGINE
+// ═══════════════════════════════════════════════════════
+
+const SYMPTOM_DATA = [
+  {
+    id: 'dry-eye',
+    emoji: '👁️',
+    name: 'Dry Eyes / Burning / Redness',
+    sub: 'Seasonal · Worse in summer · AC environments',
+    statusLabel: '🔴 Active — 3 causes confirmed',
+    causes: [
+      { name: 'Diabetic corneal nerve damage', status: 'active', statusLabel: '🔴 Active cause', current: 'HbA1c 7.7%', target: '<7.0%', currentClass: 'bad', gap: '↑ 0.7% above target — damages corneal nerves', liveKey: 'hba1c' },
+      { name: 'Meibomian gland blockage (high LDL)', status: 'active', statusLabel: '🔴 Active cause', current: 'LDL 227.6 mg/dL', target: '<130 mg/dL', currentClass: 'bad', gap: '↑ 97.6 above target — blocks oil layer of tear film', liveKey: null },
+      { name: 'Allergic immune activation (eosinophilia)', status: 'active', statusLabel: '🔴 Active cause', current: 'Eosinophils 10%', target: '<6%', currentClass: 'bad', gap: '↑ Elevated — independent allergic trigger', liveKey: null },
+      { name: 'Sleep deprivation — tear film instability', status: 'watch', statusLabel: '🟡 Track to confirm', current: 'Log sleep hours', target: '≥7 hrs/night', currentClass: 'warn', gap: 'Not yet consistently tracked', liveKey: 'sleep' },
+    ],
+    mechanism: 'High glucose damages corneal nerves (diabetic neuropathy), reducing tear production. High LDL blocks meibomian glands — the oil layer of your tear film fails and tears evaporate faster. Elevated eosinophils trigger allergic conjunctivitis independently. All three act simultaneously, worse in summer heat and AC environments.',
+    fix: 'As HbA1c drops below 7.0% and LDL drops below 150, dry eye severity reduces measurably each summer. This is mechanism, not coincidence. Controlling HbA1c is worth more than all eye drops combined.',
+    escalation: 'Vision blurs, eye pain develops, or symptoms worsen despite drops → Dr. Prateeksha urgently. Next scheduled: May 5, 2026 — do not miss.',
+  },
+  {
+    id: 'fatigue',
+    emoji: '🪫',
+    name: 'Fatigue / Low Energy',
+    sub: 'Mid-afternoon slump · Post-meal heaviness · Brain fog',
+    statusLabel: '🔴 Active — 2 confirmed causes',
+    causes: [
+      { name: 'Glucose starvation of cells (insulin resistance)', status: 'active', statusLabel: '🔴 Active cause', current: 'FBG 150 mg/dL', target: '<130 mg/dL', currentClass: 'bad', gap: '↑ 20 above target', liveKey: 'fbg' },
+      { name: 'Liver dysfunction — reduced metabolic output', status: 'active', statusLabel: '🔴 Active cause', current: 'ALT 84 U/L', target: '<50 U/L', currentClass: 'bad', gap: '↑ 34 above target — liver processing fats inefficiently', liveKey: null },
+      { name: 'Sleep hours', status: 'watch', statusLabel: '🟡 Track daily', current: 'Log sleep hours', target: '≥7 hrs/night', currentClass: 'warn', gap: 'Not consistently tracked', liveKey: 'sleep' },
+    ],
+    mechanism: 'At FBG 150 mg/dL, insulin resistance means glucose cannot efficiently enter your cells — the body feels fuel-starved despite high blood sugar. Your liver at ALT 84 is inflamed and processing fats inefficiently, further reducing energy output. The combination causes persistent fatigue, especially after carbohydrate-heavy canteen meals.',
+    fix: 'Fatigue often precedes a glucose spike by 12–24 hours. When you feel unusually tired mid-afternoon, log your next morning fasting glucose — it will likely be elevated. Post-dinner walk breaks this cycle fastest.',
+    escalation: null,
+  },
+  {
+    id: 'headache',
+    emoji: '🤕',
+    name: 'Headache / Pulsing Sensation',
+    sub: 'Morning · Occipital (back of head) · After stress',
+    statusLabel: '🟠 Watch — BP is primary cause',
+    causes: [
+      { name: 'Sustained hypertension', status: 'active', statusLabel: '🔴 Active cause', current: 'BP 140/100 mmHg', target: '<130/80', currentClass: 'bad', gap: '↑ Stage 1 HTN confirmed', liveKey: 'bp' },
+      { name: 'Dehydration / high sodium', status: 'watch', statusLabel: '🟡 Log water intake', current: 'Not tracked', target: '8–10 glasses/day', currentClass: 'warn', gap: 'Add to daily notes', liveKey: null },
+      { name: 'Poor sleep — cortisol spike', status: 'watch', statusLabel: '🟡 Track sleep', current: 'Log sleep hours', target: '≥7 hrs/night', currentClass: 'warn', gap: 'Not consistently tracked', liveKey: 'sleep' },
+    ],
+    mechanism: 'BP at 140/100 means your vessel walls experience sustained elevated pressure continuously. Morning headaches are classic — BP is highest in early morning before medication. Pulsing sensation occurs when BP spikes further with stress, exertion, or poor sleep. Cortisol from inadequate sleep directly raises BP by 5–10 mmHg.',
+    fix: 'When headache occurs, log your BP immediately in the daily log. Post-dinner walk lowers systolic by 5–8 mmHg over time — direct mechanism, not generic advice.',
+    escalation: 'BP >160/100 on home reading + headache → call Dr. Amit Sharma (8800106073) same day. BP >180/110 or sudden severe headache → Emergency.',
+  },
+  {
+    id: 'abdominal',
+    emoji: '🫁',
+    name: 'Abdominal Heaviness / Bloating',
+    sub: 'Right upper quadrant · After fatty meals · Fullness',
+    statusLabel: '🔴 Active — MASLD/MASH confirmed on Fibroscan',
+    causes: [
+      { name: 'Liver steatosis — Fibroscan CAP S3 (severe)', status: 'active', statusLabel: '🔴 Confirmed Fibroscan Mar 2026', current: 'CAP 347 dB/m', target: '<238 dB/m', currentClass: 'bad', gap: '↑ Severe grade — but fibrosis F0–F1 = REVERSIBLE NOW', liveKey: null },
+      { name: 'Liver inflammation (MASH)', status: 'active', statusLabel: '🔴 Active cause', current: 'ALT 84 · AST 56', target: 'ALT <50 · AST <46', currentClass: 'bad', gap: '↑ Both elevated — doubled vs Apr 2025', liveKey: null },
+      { name: 'Triglyceride-driven fat accumulation', status: 'active', statusLabel: '🔴 Active cause', current: 'TG 237 mg/dL', target: '<150 mg/dL', currentClass: 'bad', gap: '↑ 87 above target', liveKey: null },
+      { name: 'Mild splenomegaly', status: 'watch', statusLabel: '🟡 Monitor — confirmed USG', current: 'Confirmed on USG', target: 'Doppler pending', currentClass: 'warn', gap: 'CDFI for spleno-portal axis pending', liveKey: null },
+    ],
+    mechanism: 'Your liver contains severe fat infiltration (CAP 347 = S3 grade). An enlarged fatty liver presses against the stomach and diaphragm causing fullness and bloating. After fatty meals, the liver is asked to process lipids it is already overloaded with — causing post-meal heaviness. The good news: fibrosis is only F0–F1 (minimal). This is reversible if you act now.',
+    fix: 'Log abdominal discomfort in Notes field of your daily log. Low-fat diet + Reheptin + Evitol + Lipaglyn directly targets liver fat. ALT should drop toward 50 within 3 months if adherent. Look AHEAD Trial: 7% weight loss = 40% liver fat reduction.',
+    escalation: 'Right upper quadrant PAIN (sharp or persistent) + fever + yellow eyes/skin = Emergency. Do not wait. Dr. Atul Sharma, Artemis Gastroenterology.',
+  },
+  {
+    id: 'sleep',
+    emoji: '😴',
+    name: 'Poor Sleep / Waking at Night',
+    sub: 'Difficulty staying asleep · Frequent urination · Restless',
+    statusLabel: '🟡 Watch — glucose is likely driver',
+    causes: [
+      { name: 'Nocturia from high blood glucose', status: 'active', statusLabel: '🔴 Likely active cause', current: 'FBG 150 mg/dL', target: '<130 mg/dL', currentClass: 'bad', gap: 'High glucose → kidneys filter excess → urination at night', liveKey: 'fbg' },
+      { name: 'Sleep apnoea risk (overweight + HTN)', status: 'watch', statusLabel: '🟡 Screen if sleep stays poor', current: 'BMI 26.78 · BP 140/100', target: 'BMI <23', currentClass: 'warn', gap: 'Assess after glucose improves if still disrupted', liveKey: null },
+      { name: 'Cortisol from metabolic stress', status: 'watch', statusLabel: '🟡 Indirect — improves with control', current: 'Not measured', target: 'Normal range', currentClass: 'warn', gap: 'Improves as HbA1c and BP normalise', liveKey: null },
+    ],
+    mechanism: 'When blood glucose is chronically elevated, insulin resistance disrupts sleep architecture — reducing deep sleep stages. Excess glucose filtered by kidneys causes frequent night urination (nocturia), waking you 1–3 times. Poor sleep then worsens insulin resistance the next day — a direct feedback loop that perpetuates itself.',
+    fix: 'If waking to urinate at night, check fasting glucose next morning — the correlation is direct. Breaking the cycle: post-dinner walk lowers overnight glucose, which reduces nocturia, which improves sleep, which improves insulin sensitivity the next day.',
+    escalation: 'Waking more than 3× per night consistently despite glucose improving → raise with Dr. Amit Sharma to screen for sleep apnoea.',
+  },
+  {
+    id: 'breathlessness',
+    emoji: '🫀',
+    name: 'Breathlessness on Exertion',
+    sub: 'Climbing stairs · Brisk walking · Physical effort',
+    statusLabel: '🟢 Low risk now — TMT negative (Feb 2026)',
+    causes: [
+      { name: 'Cardiac status (TMT result)', status: 'ok', statusLabel: '🟢 Negative — most reassuring finding', current: 'TMT Negative · 87% THR achieved', target: 'Maintain', currentClass: 'good', gap: 'No inducible ischaemia. Good exercise tolerance confirmed.' },
+      { name: 'Mild LV diastolic dysfunction (Echo)', status: 'watch', statusLabel: '🟡 Monitor on repeat Echo', current: 'Mild diastolic dysfunction', target: 'Normal diastolic function', currentClass: 'warn', gap: 'BP control is the primary fix for this' },
+      { name: 'Cardiovascular risk accumulation (silent)', status: 'watch', statusLabel: '🟡 Accumulating silently without intervention', current: 'LDL 227 · BP 140/100 · HbA1c 7.7%', target: 'All three at target', currentClass: 'bad', gap: 'Atherosclerosis risk HIGH if markers stay elevated for 2–3 more years' },
+    ],
+    mechanism: 'Your TMT is currently negative — no blockages causing exercise-induced ischaemia at this time. This is your most reassuring clinical finding. However, with LDL 227 + BP 140/100 + HbA1c 7.7% simultaneously elevated, arterial plaque accumulation is occurring silently. Father had CABG at 54 — you are 33. This is your window to intervene.',
+    fix: 'Post-dinner walk 30 min daily builds cardiac reserve and directly counteracts deconditioning. Storvas 20mg at bedtime halts plaque progression. Every month these three markers stay elevated increases 10-year cardiac risk by measurable increments.',
+    escalation: 'Chest tightness, chest pain, or pain radiating to arm/jaw during or after exertion → Emergency immediately. Do not wait for an appointment.',
+  },
+];
+
+function renderWhyScreen() {
+  const container = document.getElementById('why-symptoms');
+  if (!container) return;
+  const latest = getLatestLog();
+  const latestFBG = latest?.['Fasting Glucose'];
+  const latestBPSys = latest?.['BP Systolic'];
+  const latestBPDia = latest?.['BP Diastolic'];
+  const latestSleep = latest?.['Sleep Hours'];
+
+  container.innerHTML = SYMPTOM_DATA.map(s => {
+    const causesHtml = s.causes.map(c => {
+      let cur = c.current;
+      let cls = c.currentClass;
+      if (c.liveKey === 'fbg' && latestFBG) {
+        cur = `FBG ${latestFBG} mg/dL (live)`;
+        cls = latestFBG > 140 ? 'bad' : latestFBG > 120 ? 'warn' : 'good';
+      } else if (c.liveKey === 'bp' && latestBPSys) {
+        cur = `BP ${latestBPSys}/${latestBPDia} mmHg (live)`;
+        cls = latestBPSys > 145 ? 'bad' : latestBPSys > 135 ? 'warn' : 'good';
+      } else if (c.liveKey === 'sleep' && latestSleep) {
+        cur = `${latestSleep} hrs (last logged)`;
+        cls = latestSleep >= 7 ? 'good' : latestSleep >= 6 ? 'warn' : 'bad';
+      }
+      return `<div class="cause-row">
+        <div class="cause-row-top">
+          <div class="cause-name">${c.name}</div>
+          <div class="cause-status ${c.status}">${c.statusLabel}</div>
+        </div>
+        <div class="cause-vals">
+          <div class="cause-val-item"><span class="label">NOW:</span><span class="val ${cls}">&nbsp;${cur}</span></div>
+          <div class="cause-val-item"><span class="label">GOAL:</span><span class="val">&nbsp;${c.target}</span></div>
+        </div>
+        ${c.gap ? `<div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:5px;">${c.gap}</div>` : ''}
+      </div>`;
+    }).join('');
+
+    return `<div class="symptom-card" id="symptom-${s.id}">
+      <div class="symptom-header" onclick="toggleSymptom('${s.id}')">
+        <div class="symptom-header-left">
+          <div class="symptom-emoji">${s.emoji}</div>
+          <div>
+            <div class="symptom-name">${s.name}</div>
+            <div class="symptom-sub">${s.statusLabel}</div>
+          </div>
+        </div>
+        <div class="symptom-chevron">▼</div>
+      </div>
+      <div class="symptom-body">
+        <div style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-bottom:10px;letter-spacing:0.5px;">ROOT CAUSES</div>
+        ${causesHtml}
+        <div class="mechanism-box">
+          <div class="mech-title">MECHANISM — HOW THIS HAPPENS TO YOU</div>
+          <div class="mech-text">${s.mechanism}</div>
+        </div>
+        <div class="mechanism-box" style="background:rgba(16,185,129,0.06);border-color:rgba(16,185,129,0.2);margin-top:8px;">
+          <div class="mech-title" style="color:#6ee7b7;">WHAT FIXES IT</div>
+          <div class="mech-text">${s.fix}</div>
+        </div>
+        ${s.escalation ? `<div class="escalation-box"><strong>🚨 ESCALATION RULE</strong>${s.escalation}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleSymptom(id) {
+  document.getElementById('symptom-' + id).classList.toggle('expanded');
+}
+</script>
+</body>
+</html>
